@@ -36,11 +36,12 @@ void loop() {
     // Handle data
     if (readString.length() > 0) {
         // Write back a copy of what was recieved
+        Serial.print("Recieved: ");
         Serial.println(readString);
         int n = readString.toInt();
 
         // Write position to servo
-        Serial.print("Angle: ");
+        Serial.print("Setting angle: ");
         Serial.println(n);
         myservo.write(n);
     } 
