@@ -1,5 +1,6 @@
 {
     "board": "arduino:avr:uno",
     "port": "COM3",
-    "sketch": "ManualControl.ino"
+    "sketch": "ManualControl.ino",
+    "output": "./build"
 }
