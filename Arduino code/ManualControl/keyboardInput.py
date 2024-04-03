@@ -3,7 +3,7 @@ from pynput import keyboard
 from timeit import default_timer as timer
 
 # Configure your COM port and baud rate
-COM_PORT = 'COM3'  # Change this to your COM port
+COM_PORT = '/dev/ttyACM0'  # Change this to your COM port
 BAUD_RATE = 115200   # Change this to match your UART device configuration
 
 # Open the serial connection

@@ -13,7 +13,7 @@ Yellow   = Signal
 Servo can have pins >= 2, since 0 and 1 are interfered with by Serial connection.
 */
 
-#include <Servo.h> 
+#include <Servo.h>
 Servo myservo;  // create servo object to control a servo 
 
 void setup() {
