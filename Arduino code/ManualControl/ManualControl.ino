@@ -16,14 +16,14 @@ Servo can have pins >= 2, since 0 and 1 are interfered with by Serial connection
 #include <Servo.h>
 #define NUM_SERVOS 3
 Servo servo[NUM_SERVOS]; // create servo object to control servos
-uint8_t servoPins[NUM_SERVOS] = {2,3,4};
-uint8_t servoVals[NUM_SERVOS] = { }; // Initializes to zero
+uint8_t servoPins[NUM_SERVOS] = {4,2,3};
+uint8_t servoVals[NUM_SERVOS] = {0,0,0}; // Initializes to zero
 
 void setup() {
     Serial.begin(115200, SERIAL_8N1); // Begin serial connection with 115200 Baud Rate, 8 data bits, no parity, one stop bit
     for (size_t i = 0; i < NUM_SERVOS; i++)
     {
-        servo[i].write(0); // Initial servo angle
+        servo[i].write(servoVals[i]); // Initial servo angle
         servo[i].attach(servoPins[i]);  // Servo pin
     }
     

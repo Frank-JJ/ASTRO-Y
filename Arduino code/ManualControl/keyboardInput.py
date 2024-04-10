@@ -19,16 +19,17 @@ def send_as_bytearray(arr):
     ser.write(bytearray(arr))
 
 # Initialize position array to zero
-pos = [0, 0, 0]
+NUM_SERVOS = 3
+pos = [0 for i in range(NUM_SERVOS)]
 send_as_bytearray(pos)
 
 # Multiplier to comand constant rotation speed of servo
 # 1 is slow
-vel_mult = 2
+vel_mult = 5
 
 def on_press(key):
     # Initialize change to zero
-    change = [0, 0, 0]
+    change = [0 for i in range(NUM_SERVOS)]
     
     # Check key type
     try:
@@ -44,7 +45,7 @@ def on_press(key):
         
     global pos
     # Update position array and send it
-    for index in range(len(change)):
+    for index in range(NUM_SERVOS):
         if pos[index] + change[index]*vel_mult <= 180 and pos[index] + change[index]*vel_mult >= 0:
             pos[index] += change[index]*vel_mult
     send_as_bytearray(pos)
@@ -56,16 +57,32 @@ def on_release(key):
 
 listener = keyboard.Listener(on_press=on_press, on_release=on_release)
 
+delta_time = 0
+run_time = 0
+
+def gaitY_1():
+    global delta_time, run_time
+    delta_time = timer() - delta_time
+    run_time += delta_time
+    # movements = {}
+    # # Move left leg
+    # if run_time < 1:
+    #     pos[0] += 
+
 
 try:
     # Start listener that allows getting keyboard input
+    ser.reset_input_buffer()
     listener.start()
     
     while True:
         # Chech and read messages from serial connection
         if ser.in_waiting > 0:
-            c = ser.readline().decode()
-            print(c)
+            c = ser.readline()
+            try:
+                print(c.decode())
+            except:
+                print(c)
 
 except KeyboardInterrupt:
     print("Exiting...")
