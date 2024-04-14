@@ -15,6 +15,7 @@ Servo can have pins >= 2, since 0 and 1 are interfered with by Serial connection
 
 #include <Servo.h>
 #define NUM_SERVOS 3
+
 Servo servo[NUM_SERVOS]; // create servo object to control servos
 uint8_t servoPins[NUM_SERVOS] = {4,2,3};
 uint8_t servoVals[NUM_SERVOS] = {0,0,0}; // Initializes to zero
