@@ -15,15 +15,25 @@ Servo can have pins >= 2, since 0 and 1 are interfered with by Serial connection
 This file takes a gait description vector and creates a series of motor inputs for the arduino
 */
 
-#include <matplot/matplot.h>
+//#include <matplot/matplot.h>
 #include <iostream>
+#include <fstream>
+#include <cstring>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
 #include <vector>
 #include <chrono>
 #include <thread>
 
-#define GAIT_T 3.7    //Duration of the gait's repeating pattern (seconds)
-#define GAIT_AMP 0.83  //Amplitude of the gait (0-1)
+#define GAIT_T 4   //Duration of the gait's repeating pattern (seconds)
+#define GAIT_AMP 0.5  //Amplitude of the gait (0-1)
+bool online = true;
 
+//UART Connection to Arduino UNO
+struct termios tty;
+const char* portName = "/dev/ttyACM0";
+int serialPort;
 
 struct motorCMD{
   int motorID;
@@ -54,8 +64,13 @@ void testWorkFunction(int max = 40){
   return;
 }
 
+int mapToMotorValue(float M_pos){
+  return (int)(M_pos * 256);
+}
+
 std::vector<float> gaitControl(std::vector<motorCMD> gait, std::chrono::microseconds deltaT = std::chrono::microseconds(0)){
   static float M1_pos = 0.0, M2_pos = 0.0, M3_pos = 0.0;
+  static int M1_mapped = 0, M2_mapped = 0, M3_mapped = 0;
   static float T_in_gait = 0.0, T_elapsed = 0.0;
 
   //Incrementing the timing of the current gait
@@ -92,6 +107,13 @@ std::vector<float> gaitControl(std::vector<motorCMD> gait, std::chrono::microsec
     }
   }
 
+  M1_mapped = mapToMotorValue(M1_pos);
+  M2_mapped = mapToMotorValue(M2_pos);
+  M3_mapped = mapToMotorValue(M3_pos);
+
+  uint8_t motor_pos_array[3] = {(uint8_t)M1_mapped, (uint8_t)M2_mapped, (uint8_t)M3_mapped};
+  write(serialPort, motor_pos_array, sizeof(motor_pos_array));
+
   std::cout << "["<< T_elapsed << "]: Motor positions: [" << M1_pos << ", " << M2_pos << ", " << M3_pos << "]" << std::endl;
 
   return {T_elapsed, M1_pos, M2_pos, M3_pos};
@@ -99,10 +121,39 @@ std::vector<float> gaitControl(std::vector<motorCMD> gait, std::chrono::microsec
 
 
 int main(int argc, char* argv[]){
+
+  if(online){
+    //Test connection to arduino:
+    serialPort = open(portName, O_RDWR | O_NOCTTY);
+    if(serialPort == -1){
+      std::cerr << "Error opening serial port" << std::endl;
+      return 1;
+    }
+
+    memset(&tty, 0, sizeof(tty));
+    if(tcgetattr(serialPort, &tty) != 0){
+      std::cerr << "Cannot get serial attributes!" << std::endl;
+      return 1;
+    }
+
+    cfsetospeed(&tty, B115200); //Set BAUD-rate
+    tty.c_cflag |= (CLOCAL | CREAD);
+    tty.c_cflag &= ~PARENB; //No parity
+    tty.c_cflag &= ~CSTOPB; //1 stop bit
+    tty.c_cflag &= ~CSIZE;
+    tty.c_cflag |= CS8; //8 data bits
+    tcsetattr(serialPort, TCSANOW, &tty);
+
+    uint8_t test_array[3] = {0x0, 0x0, 0x0};
+    write(serialPort, test_array, sizeof(test_array));
+
+  }
+
+
   using namespace std::chrono;
 
   //The interval of which the motor commands are calculated (motor ticks):
-  float tick_frq = 25; //Hz
+  float tick_frq = 10; //Hz
   float time_ms = 1000/tick_frq;
   milliseconds motor_tick((int)time_ms);
   std::cout << "A motor tick is: " << (int)time_ms << " ms" << std::endl;
@@ -146,18 +197,23 @@ int main(int argc, char* argv[]){
     //std::cout << "Tick timing: " << tick_duration.count() << std::endl;
 
     if(!motor_positions.empty()){
+      /*
       if(motor_positions.back()[0] >= 25.0){
         run = false;
       }
       else{
         std::cout << "Time has not exceeded 25 seconds: " << motor_positions.back()[0] << std::endl;
       }
+      */
     }
     else{
       std::cout << "motor_positions is empty!" << std::endl;
     }
   }
 
+  close(serialPort);
+
+  /*
   //Plotting the gait after 25 seconds:
   std::vector<double> time, M1, M2, M3;
   for(const auto& command_list : motor_positions){
@@ -183,6 +239,7 @@ int main(int argc, char* argv[]){
   std::string title_str = "Gait Period: " + std::to_string(GAIT_T) + "s, Gait Amplitude Gain: " + std::to_string(GAIT_AMP);
   title(title_str);
   show();
+  */
 
   return 0;
 }
