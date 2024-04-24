@@ -26,8 +26,9 @@ This file takes a gait description vector and creates a series of motor inputs f
 #include <chrono>
 #include <thread>
 
-#define GAIT_T 4   //Duration of the gait's repeating pattern (seconds)
-#define GAIT_AMP 0.5  //Amplitude of the gait (0-1)
+#define GAIT_T 2   //Duration of the gait's repeating pattern (seconds)
+#define GAIT_AMP 1  //Amplitude of the gait (0-1)
+#define MOTOR_MAX_VAL 90 //Max degree of servos allowed
 bool online = true;
 
 //UART Connection to Arduino UNO
@@ -42,15 +43,28 @@ struct motorCMD{
   float duration;
 };
 
-std::vector<motorCMD> Gait_1 = {motorCMD{1,0.9,0.0,0.3}, 
-                                motorCMD{2,0.9,0.0,0.3},
-                                motorCMD{3,0.6,0.3,0.2},
-                                motorCMD{1,0.5,0.3,0.2}, 
-                                motorCMD{2,0.5,0.3,0.2},
-                                motorCMD{1,0.0,0.5,0.3},
-                                motorCMD{2,0.0,0.5,0.3},
-                                motorCMD{3,0.0,0.8,0.2}};
+enum Motors {Left=1, Right=2, Tail=3};
 
+// Goes backwards with frictionpads in direction of tail to two front legs
+std::vector<motorCMD> Gait_1 = {motorCMD{Left,  0.9,  0.0,  0.3}, 
+                                motorCMD{Right, 0.9,  0.0,  0.3},
+                                motorCMD{Tail,  0.6,  0.3,  0.2},
+                                motorCMD{Left,  0.5,  0.3,  0.2}, 
+                                motorCMD{Right, 0.5,  0.3,  0.2},
+                                motorCMD{Left,  0.0,  0.5,  0.3},
+                                motorCMD{Right, 0.0,  0.5,  0.3},
+                                motorCMD{Tail,  0.0,  0.8,  0.2}};
+
+// TODO
+std::vector<motorCMD> Gait_2 = {motorCMD{Left,  0.5,  0.0,  0.5},
+                                motorCMD{Right, 0.5,  0.0,  0.5},
+                                {Tail, 0.5, 0.0, 0.5},
+                                motorCMD{Left,  0.0,  0.5,  0.5},
+                                motorCMD{Right, 0.0,  0.5,  0.5},
+                                {Tail, 0.0, 0.7, 0.3},
+                                };
+
+#define SELECTED_GAIT Gait_1
 
 void testWorkFunction(int max = 40){
   using namespace std::chrono;
@@ -65,7 +79,7 @@ void testWorkFunction(int max = 40){
 }
 
 int mapToMotorValue(float M_pos){
-  return (int)(M_pos * 256);
+  return (int)(M_pos * MOTOR_MAX_VAL);
 }
 
 std::vector<float> gaitControl(std::vector<motorCMD> gait, std::chrono::microseconds deltaT = std::chrono::microseconds(0)){
@@ -171,13 +185,13 @@ int main(int argc, char* argv[]){
     std::vector<float> new_motor_positions;
     if(tick_start == last_call){
       last_call = steady_clock::now();
-      motor_positions.push_back(gaitControl(Gait_1));
+      motor_positions.push_back(gaitControl(SELECTED_GAIT));
     }
     else{
       auto now = steady_clock::now();
       microseconds deltaT = duration_cast<microseconds>(now - last_call);
       last_call = now;
-      motor_positions.push_back(gaitControl(Gait_1, deltaT));
+      motor_positions.push_back(gaitControl(SELECTED_GAIT, deltaT));
     }
 
     auto work_complete = steady_clock::now();
