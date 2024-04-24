@@ -55,16 +55,17 @@ std::vector<motorCMD> Gait_1 = {motorCMD{Left,  0.9,  0.0,  0.3},
                                 motorCMD{Right, 0.0,  0.5,  0.3},
                                 motorCMD{Tail,  0.0,  0.8,  0.2}};
 
-// TODO
-std::vector<motorCMD> Gait_2 = {motorCMD{Left,  0.5,  0.0,  0.5},
-                                motorCMD{Right, 0.5,  0.0,  0.5},
-                                {Tail, 0.5, 0.0, 0.5},
-                                motorCMD{Left,  0.0,  0.5,  0.5},
-                                motorCMD{Right, 0.0,  0.5,  0.5},
-                                {Tail, 0.0, 0.7, 0.3},
+// Follows the connecting wires between arduino and servos. 
+// Using GAIT_T 2, GAIT_AMP 1, and MOTOR_MAX_VAL 90 can move up ramp and on flat surface 
+std::vector<motorCMD> Gait_2 = {{Left,  0.5,  0.0,  0.5},
+                                {Right, 0.5,  0.0,  0.5},
+                                {Tail,  0.5,  0.0,  0.5},
+                                {Left,  0.0,  0.5,  0.5},
+                                {Right, 0.0,  0.5,  0.5},
+                                {Tail,  0.0,  0.7,  0.3}
                                 };
 
-#define SELECTED_GAIT Gait_1
+#define SELECTED_GAIT Gait_2
 
 void testWorkFunction(int max = 40){
   using namespace std::chrono;
