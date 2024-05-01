@@ -25,6 +25,7 @@ This file takes a gait description vector and creates a series of motor inputs f
 #include <vector>
 #include <chrono>
 #include <thread>
+#include <cstdlib>
 
 #define GAIT_T 2   //Duration of the gait's repeating pattern (seconds)
 #define GAIT_AMP 1  //Amplitude of the gait (0-1)
@@ -44,8 +45,15 @@ struct motorCMD{
 };
 
 enum Motors {Left=1, Right=2, Tail=3};
+uint8_t program_end_motorpos[3] = {0,0,0};
+
+void exiting() {
+  std::cout << "Exiting";
+  write(serialPort, program_end_motorpos, sizeof(program_end_motorpos));   
+}
 
 // Goes backwards with frictionpads in direction of tail to two front legs
+// On white table in the back of the lab, with friction pads with infill form, it moves towards the tail and slightly to the right
 std::vector<motorCMD> Gait_1 = {motorCMD{Left,  0.9,  0.0,  0.3}, 
                                 motorCMD{Right, 0.9,  0.0,  0.3},
                                 motorCMD{Tail,  0.6,  0.3,  0.2},
@@ -65,7 +73,15 @@ std::vector<motorCMD> Gait_2 = {{Left,  0.5,  0.0,  0.5},
                                 {Tail,  0.0,  0.7,  0.3}
                                 };
 
-#define SELECTED_GAIT Gait_2
+// Gait 1 from slides
+std::vector<motorCMD> Gait_3 = {{Tail,  0.5,  0.0,  0.1},
+                                {Left,  0.5,  0.0,  0.2},
+                                {Right, 0.0,  0.0,  0.2},
+                                {Left,  0.0,  0.5,  0.2},
+                                {Right, 0.5,  0.5,  0.2},
+                                };
+
+#define SELECTED_GAIT Gait_1
 
 void testWorkFunction(int max = 40){
   using namespace std::chrono;
@@ -226,7 +242,6 @@ int main(int argc, char* argv[]){
     }
   }
 
-  close(serialPort);
 
   /*
   //Plotting the gait after 25 seconds:
@@ -255,6 +270,7 @@ int main(int argc, char* argv[]){
   title(title_str);
   show();
   */
-
+  // std::atexit(exiting);
+  close(serialPort);
   return 0;
 }
