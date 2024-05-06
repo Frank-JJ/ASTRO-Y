@@ -15,7 +15,7 @@ Servo can have pins >= 2, since 0 and 1 are interfered with by Serial connection
 This file takes a gait description vector and creates a series of motor inputs for the arduino
 */
 
-//#include <matplot/matplot.h>
+// #include <matplot/matplot.h>
 #include <iostream>
 #include <fstream>
 #include <cstring>
@@ -27,10 +27,7 @@ This file takes a gait description vector and creates a series of motor inputs f
 #include <thread>
 #include <cstdlib>
 
-#define GAIT_T 2   //Duration of the gait's repeating pattern (seconds)
-#define GAIT_AMP 1  //Amplitude of the gait (0-1)
-#define MOTOR_MAX_VAL 90 //Max degree of servos allowed
-bool online = true;
+
 
 //UART Connection to Arduino UNO
 struct termios tty;
@@ -44,8 +41,21 @@ struct motorCMD{
   float duration;
 };
 
+// struct gaitStruct
+// {
+//   std::vector<motorCMD> commands;
+//   float gaitTime;
+//   float gaitAmplitude;
+//   float motorMaxValue;
+//   float tickFrequency;
+// };
+
+int8_t running_commands[3] = {-1,-1,-1};
+
 enum Motors {Left=1, Right=2, Tail=3};
 uint8_t program_end_motorpos[3] = {0,0,0};
+float M_pos[3] = {0,0,0};
+float prev_M_pos[3] = {0,0,0};
 
 void exiting() {
   std::cout << "Exiting";
@@ -56,7 +66,7 @@ void exiting() {
 // On white table in the back of the lab, with friction pads with infill form, it moves towards the tail and slightly to the right
 std::vector<motorCMD> Gait_1 = {motorCMD{Left,  0.9,  0.0,  0.3}, 
                                 motorCMD{Right, 0.9,  0.0,  0.3},
-                                motorCMD{Tail,  0.6,  0.3,  0.2},
+                                motorCMD{Tail,  0.9,  0.3,  0.2},
                                 motorCMD{Left,  0.5,  0.3,  0.2}, 
                                 motorCMD{Right, 0.5,  0.3,  0.2},
                                 motorCMD{Left,  0.0,  0.5,  0.3},
@@ -73,15 +83,72 @@ std::vector<motorCMD> Gait_2 = {{Left,  0.5,  0.0,  0.5},
                                 {Tail,  0.0,  0.7,  0.3}
                                 };
 
-// Gait 1 from slides
-std::vector<motorCMD> Gait_3 = {{Tail,  0.5,  0.0,  0.1},
-                                {Left,  0.5,  0.0,  0.2},
-                                {Right, 0.0,  0.0,  0.2},
-                                {Left,  0.0,  0.5,  0.2},
-                                {Right, 0.5,  0.5,  0.2},
+
+// Jumps forward (from tail towards legs)
+// Works well with GAIT_T 1, GAIT_AMP 1, MOTOR_MAX_VAL 90, tick_frq = 50
+std::vector<motorCMD> Gait_3 = {{Tail,  0.9,  0.0,  0.1},
+                                {Tail,  0.0,  0.4,  0.1},
+                                };
+std::vector<motorCMD> Gait_4 = {{Tail,  0.9,  0.0,  0.4},
+                                {Tail,  0.0,  0.4,  0.1},
                                 };
 
-#define SELECTED_GAIT Gait_1
+
+std::vector<motorCMD> Gait_5 = {{Left,  1.0,  0.0,  0.1},
+                                {Right, 1.0,  0.0,  0.1},
+                                {Left,  0.0,  0.1,  0.9},
+                                {Right, 0.0,  0.1,  0.9},
+                                };
+
+// GAIT_T 2, GAIT_AMP 1, MOTOR_MAX_VAL 90, tick_frq = 100
+std::vector<motorCMD> Gait_6 = {{Right, 1.0 , 0.0, 0.5},
+                                {Left,  1.0, 0.0, 0.5},
+                                {Tail, 1.0, 0.0, 0.5},
+                                {Right, 0.0, 0.55, 0.2},
+                                {Left, 0.0, 0.55, 0.2},
+                                {Tail, 0.0, 0.55, 0.45}
+                                };
+
+std::vector<motorCMD> Gait_7 = {motorCMD{Left,  0.9,  0.0,  0.3}, 
+                                motorCMD{Right, 0.9,  0.0,  0.3},
+                                motorCMD{Tail,  0.9,  0.3,  0.2},
+                                motorCMD{Left,  0.0,  0.5,  0.3},
+                                motorCMD{Right, 0.0,  0.5,  0.3},
+                                motorCMD{Tail,  0.0,  0.8,  0.2}};
+
+std::vector<motorCMD> Jump = {
+  {Tail, 1.0, 0, 0.001},
+  {Tail, 0.0, 0.4, 0.1}
+};
+
+// Tested with:
+// #define GAIT_T 2   //Duration of the gait's repeating pattern (seconds)
+// #define GAIT_AMP 1  //Amplitude of the gait (0-1)
+// #define MOTOR_MAX_VAL 90 //Max degree of servos allowed
+// bool online = true;
+// float tick_frq = 50; //Hz
+std::vector<motorCMD> Worm = {
+  {Tail,  0.2,  0,    0.2},
+  {Left,  0.7,  0,    0.5},
+  {Right, 0.7,  0,    0.5},
+  {Tail,  0.2,  0.5,  0.2},
+  {Left,  0,    0.8,  0.05},
+  {Right, 0,    0.8,  0.05},
+  {Tail,  0,    0.8,  0.2},
+};
+
+std::vector<motorCMD> Lesgo = {
+  {Tail,  0.9,  0,    0.2},
+  {Tail,  0,    0.8,  0.05},
+};
+
+#define SELECTED_GAIT Worm 
+
+#define GAIT_T 2   //Duration of the gait's repeating pattern (seconds)
+#define GAIT_AMP 1  //Amplitude of the gait (0-1)
+#define MOTOR_MAX_VAL 90 //Max degree of servos allowed
+bool online = true;
+float tick_frq = 50; //Hz
 
 void testWorkFunction(int max = 40){
   using namespace std::chrono;
@@ -100,7 +167,6 @@ int mapToMotorValue(float M_pos){
 }
 
 std::vector<float> gaitControl(std::vector<motorCMD> gait, std::chrono::microseconds deltaT = std::chrono::microseconds(0)){
-  static float M1_pos = 0.0, M2_pos = 0.0, M3_pos = 0.0;
   static int M1_mapped = 0, M2_mapped = 0, M3_mapped = 0;
   static float T_in_gait = 0.0, T_elapsed = 0.0;
 
@@ -115,39 +181,41 @@ std::vector<float> gaitControl(std::vector<motorCMD> gait, std::chrono::microsec
     T_in_gait -= GAIT_T;
   }
 
+  prev_M_pos[0] = 0;
+  prev_M_pos[1] = 0;
+  prev_M_pos[2] = 0;
   for(const auto& cmd : gait){
     float cmd_start_time = cmd.start * GAIT_T, cmd_end_time = (cmd.start + cmd.duration) * GAIT_T;
+    if (T_in_gait < cmd_start_time || T_in_gait >= cmd_end_time){
+      std::cout << "prev: " << prev_M_pos[cmd.motorID-1] << " cur: " << M_pos[cmd.motorID-1] << std::endl;
+      prev_M_pos[cmd.motorID-1] = cmd.amount;
+      std::cout << prev_M_pos[cmd.motorID-1] << std::endl;
+    }
     if(T_in_gait >= cmd_start_time && T_in_gait < cmd_end_time){
       float elapsed_time_in_cmd = (T_in_gait - cmd_start_time) / (cmd_end_time - cmd_start_time);
 
-      switch (cmd.motorID){
-        case 1:
-          M1_pos = M1_pos + ((cmd.amount * GAIT_AMP) - M1_pos) * elapsed_time_in_cmd;
-          break;
-        case 2:
-          M2_pos = M2_pos + ((cmd.amount * GAIT_AMP) - M2_pos) * elapsed_time_in_cmd;
-          break;
-        case 3:
-          M3_pos = M3_pos + ((cmd.amount * GAIT_AMP) - M3_pos) * elapsed_time_in_cmd;
-          break;
-        default:
-          std::cerr << "Invalid motor ID" << std::endl;
+      if (cmd.motorID > 3)
+      {
+        std::cerr << "Invalid motor ID" << std::endl;
       }
+      
+      M_pos[cmd.motorID-1] = prev_M_pos[cmd.motorID-1] + ((cmd.amount * GAIT_AMP) - prev_M_pos[cmd.motorID-1]) * elapsed_time_in_cmd;
+      std::cout << "cmd_id: " << cmd.motorID << " gives: " << ((cmd.amount * GAIT_AMP) - prev_M_pos[cmd.motorID-1]) * elapsed_time_in_cmd << std::endl;
 
       std::cout << "["<< T_elapsed << "]: Motor " << cmd.motorID << " going to pos: " << cmd.amount * GAIT_AMP << " at time [" << T_in_gait << "]" << std::endl;
     }
   }
 
-  M1_mapped = mapToMotorValue(M1_pos);
-  M2_mapped = mapToMotorValue(M2_pos);
-  M3_mapped = mapToMotorValue(M3_pos);
+  M1_mapped = mapToMotorValue(M_pos[0]);
+  M2_mapped = mapToMotorValue(M_pos[1]);
+  M3_mapped = mapToMotorValue(M_pos[2]);
 
   uint8_t motor_pos_array[3] = {(uint8_t)M1_mapped, (uint8_t)M2_mapped, (uint8_t)M3_mapped};
   write(serialPort, motor_pos_array, sizeof(motor_pos_array));
 
-  std::cout << "["<< T_elapsed << "]: Motor positions: [" << M1_pos << ", " << M2_pos << ", " << M3_pos << "]" << std::endl;
+  std::cout << "["<< T_elapsed << "]: Motor positions: [" << M_pos[0] << ", " << M_pos[1] << ", " << M_pos[2] << "]" << std::endl;
 
-  return {T_elapsed, M1_pos, M2_pos, M3_pos};
+  return {T_elapsed, M_pos[0], M_pos[1], M_pos[2]};
 }
 
 
@@ -184,7 +252,6 @@ int main(int argc, char* argv[]){
   using namespace std::chrono;
 
   //The interval of which the motor commands are calculated (motor ticks):
-  float tick_frq = 10; //Hz
   float time_ms = 1000/tick_frq;
   milliseconds motor_tick((int)time_ms);
   std::cout << "A motor tick is: " << (int)time_ms << " ms" << std::endl;
@@ -203,12 +270,14 @@ int main(int argc, char* argv[]){
     if(tick_start == last_call){
       last_call = steady_clock::now();
       motor_positions.push_back(gaitControl(SELECTED_GAIT));
+      std::cout << "Goooooooooooooo" << std::endl;
     }
     else{
       auto now = steady_clock::now();
       microseconds deltaT = duration_cast<microseconds>(now - last_call);
       last_call = now;
       motor_positions.push_back(gaitControl(SELECTED_GAIT, deltaT));
+      std::cout << "Hellllllllllll" << std::endl;
     }
 
     auto work_complete = steady_clock::now();
@@ -243,33 +312,33 @@ int main(int argc, char* argv[]){
   }
 
 
-  /*
-  //Plotting the gait after 25 seconds:
-  std::vector<double> time, M1, M2, M3;
-  for(const auto& command_list : motor_positions){
-    if(command_list.size() < 4){
-      std::cerr << "Error: Each entry should have exactly 4 elements" << std::endl;
-      return 1;
-    }
-    time.push_back(command_list[0]);
-    M1.push_back(command_list[1]);
-    M2.push_back(command_list[2]);
-    M3.push_back(command_list[3]);
-  }
-  //Plotting:
-  using namespace matplot;
-  plot(time, M1, "r-")->line_width(2);
-  hold(on);
-  plot(time, M2, "g-")->line_width(2);
-  plot(time, M3, "b-")->line_width(2);
-  hold(off);
-  xlabel("Time");
-  ylabel("Motor pos");
-  legend({"Motor1", "Motor2", "Motor3"});
-  std::string title_str = "Gait Period: " + std::to_string(GAIT_T) + "s, Gait Amplitude Gain: " + std::to_string(GAIT_AMP);
-  title(title_str);
-  show();
-  */
+  
+  // //Plotting the gait after 25 seconds:
+  // std::vector<double> time, M1, M2, M3;
+  // for(const auto& command_list : motor_positions){
+  //   if(command_list.size() < 4){
+  //     std::cerr << "Error: Each entry should have exactly 4 elements" << std::endl;
+  //     return 1;
+  //   }
+  //   time.push_back(command_list[0]);
+  //   M1.push_back(command_list[1]);
+  //   M2.push_back(command_list[2]);
+  //   M3.push_back(command_list[3]);
+  // }
+  // //Plotting:
+  // using namespace matplot;
+  // plot(time, M1, "r-")->line_width(2);
+  // hold(on);
+  // plot(time, M2, "g-")->line_width(2);
+  // plot(time, M3, "b-")->line_width(2);
+  // hold(off);
+  // xlabel("Time");
+  // ylabel("Motor pos");
+  // legend({"Motor1", "Motor2", "Motor3"});
+  // std::string title_str = "Gait Period: " + std::to_string(GAIT_T) + "s, Gait Amplitude Gain: " + std::to_string(GAIT_AMP);
+  // title(title_str);
+  // show();
+  
   // std::atexit(exiting);
   close(serialPort);
   return 0;
