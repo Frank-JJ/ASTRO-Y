@@ -122,15 +122,33 @@ std::vector<motorCMD> Jump = {
 };
 
 // Tested with:
-// #define GAIT_T 2   //Duration of the gait's repeating pattern (seconds)
+// #define GAIT_T 0.5   //Duration of the gait's repeating pattern (seconds)
 // #define GAIT_AMP 1  //Amplitude of the gait (0-1)
 // #define MOTOR_MAX_VAL 90 //Max degree of servos allowed
 // bool online = true;
-// float tick_frq = 50; //Hz
+// float tick_frq = 100; //Hz
 std::vector<motorCMD> Worm = {
-  {Tail,  0.2,  0,    0.2},
-  {Left,  0.7,  0,    0.5},
-  {Right, 0.7,  0,    0.5},
+  {Tail,  0.68,  0,    0.2},
+  {Left,  0.9,  0,    0.5},
+  {Right, 0.9,  0,    0.5},
+  {Tail,  0.2,  0.5,  0.2},
+  {Left,  0,    0.8,  0.05},
+  {Right, 0,    0.8,  0.05},
+  {Tail,  0,    0.8,  0.2},
+};
+std::vector<motorCMD> WormR = {
+  {Tail,  0.68,  0,    0.2},
+  {Left,  0.5,  0,    0.5},
+  {Right, 0.9,  0,    0.5},
+  {Tail,  0.2,  0.5,  0.2},
+  {Left,  0,    0.8,  0.05},
+  {Right, 0,    0.8,  0.05},
+  {Tail,  0,    0.8,  0.2},
+};
+std::vector<motorCMD> WormL = {
+  {Tail,  0.68,  0,    0.2},
+  {Left,  0.9,  0,    0.5},
+  {Right, 0.5,  0,    0.5},
   {Tail,  0.2,  0.5,  0.2},
   {Left,  0,    0.8,  0.05},
   {Right, 0,    0.8,  0.05},
@@ -138,17 +156,19 @@ std::vector<motorCMD> Worm = {
 };
 
 std::vector<motorCMD> Lesgo = {
-  {Tail,  0.9,  0,    0.2},
-  {Tail,  0,    0.8,  0.05},
+  {Tail,  0.9,  0,    0.05},
+  {Right,  1.0,  0,    0.05},
+  {Left,  1.0,  0,    0.05},
+  {Tail,  0,    0.05,  0.95},
 };
 
-#define SELECTED_GAIT Worm 
+#define SELECTED_GAIT Lesgo
 
-#define GAIT_T 2   //Duration of the gait's repeating pattern (seconds)
+#define GAIT_T 0.5   //Duration of the gait's repeating pattern (seconds)
 #define GAIT_AMP 1  //Amplitude of the gait (0-1)
 #define MOTOR_MAX_VAL 90 //Max degree of servos allowed
 bool online = true;
-float tick_frq = 50; //Hz
+float tick_frq = 100; //Hz
 
 void testWorkFunction(int max = 40){
   using namespace std::chrono;
