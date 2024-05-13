@@ -162,13 +162,24 @@ std::vector<motorCMD> Lesgo = {
   {Tail,  0,    0.05,  0.95},
 };
 
-#define SELECTED_GAIT Lesgo
+std::vector<motorCMD> Crawler = {
+  {Tail, 0.7, 0, 0.05},
+  {Left, 0.9, 0.05, 0.35},
+  {Tail, 0, 0.1, 0.3},
+  {Left, 0, 0.45, 0.05},
+  {Tail, 0.7, 0.5, 0.05},
+  {Right, 0.9, 0.55, 0.35},
+  {Tail, 0, 0.6, 0.3},
+  {Right, 0, 0.95, 0.05}
+};
 
-#define GAIT_T 0.5   //Duration of the gait's repeating pattern (seconds)
+#define SELECTED_GAIT Crawler
+
+#define GAIT_T 2   //Duration of the gait's repeating pattern (seconds)
 #define GAIT_AMP 1  //Amplitude of the gait (0-1)
 #define MOTOR_MAX_VAL 90 //Max degree of servos allowed
 bool online = true;
-float tick_frq = 100; //Hz
+float tick_frq = 200; //Hz
 
 void testWorkFunction(int max = 40){
   using namespace std::chrono;
@@ -297,7 +308,6 @@ int main(int argc, char* argv[]){
       microseconds deltaT = duration_cast<microseconds>(now - last_call);
       last_call = now;
       motor_positions.push_back(gaitControl(SELECTED_GAIT, deltaT));
-      std::cout << "Hellllllllllll" << std::endl;
     }
 
     auto work_complete = steady_clock::now();
