@@ -3,6 +3,7 @@ import re
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
+import pandas as pd
 
 def read_data(file_path):
     with open(file_path, "r") as file:
@@ -14,10 +15,11 @@ def parse_data(data):
     x_position = []
     y_position = []
     for line in data[2:]:
-        parts = line.strip().split("\t")  # Changed delimiter to tab
-        time.append(float(parts[0]))
-        x_position.append(float(parts[1]))
-        y_position.append(float(parts[2]))
+        parts = line.strip().split("\t")
+        if len(parts) == 3:  # Ensure all three parts are present
+            time.append(float(parts[0]))
+            x_position.append(float(parts[1]))
+            y_position.append(float(parts[2]))
     return time, x_position, y_position
 
 def subtract_initial_position(x_position, y_position):
@@ -70,10 +72,14 @@ main_folder = "Data"
 
 # Iterate through subfolders
 for subfolder in os.listdir(main_folder):
+    #print(subfolder)
     subfolder_path = os.path.join(main_folder, subfolder)
+    
     if os.path.isdir(subfolder_path):
         # Initialize dictionary to store average speeds for each speed in the subfolder
         subfolder_average_speeds = {"05": [], "10": [], "20": []}
+        subfolder_average_straightness = {"05": [], "10": [], "20": []}
+    
 
         # Iterate through files in the subfolder
         for file_name in os.listdir(subfolder_path):
@@ -82,15 +88,22 @@ for subfolder in os.listdir(main_folder):
 
                 # Extract speed information from file name
                 speed_match = re.search(r'plast__left_(\w+)_(\d+)_\d+', file_name)
+                #speed_match = re.search(r'plast__right_(\w+)_(\d+)_\d+', file_name)
+                #speed_match = re.search(r'wood__left_(\w+)_(\d+)_\d+', file_name)
+                #speed_match = re.search(r'wood__right_(\w+)_(\d+)_\d+', file_name)
+
                 if speed_match:
                     speed_type = speed_match.group(1)
                     speed_value = speed_match.group(2)
+                    
 
                     # Step 1: Read the data
                     data = read_data(file_path)
+                    
 
                     # Step 2: Parse the data
                     time, x_position, y_position = parse_data(data)
+                    
 
                     # Step 3: Subtract the initial position
                     x_position, y_position = subtract_initial_position(x_position, y_position)
@@ -98,6 +111,10 @@ for subfolder in os.listdir(main_folder):
                     # Step 4: Calculate the average speed
                     average_speed = calculate_average_speed(time, x_position, y_position)
                     subfolder_average_speeds[speed_value].append(average_speed)
+
+                    # Step 5: Calculate the straightness
+                    straightness = calculate_straightness(x_position, y_position)
+                    subfolder_average_straightness[speed_value].append(straightness)
 
                     # Step 5: Plot the data with slope lines
                     #plot_data_with_slope(time, x_position, y_position)
@@ -107,6 +124,14 @@ for subfolder in os.listdir(main_folder):
         for speed, speeds_list in subfolder_average_speeds.items():
             if speeds_list:
                 avg_speed = np.mean(speeds_list)
-                print("Average Speed for", subfolder, "at", speed, "speed:", avg_speed, "cm/s")
+                std_dev_speed = np.std(speeds_list)
+                print("Average Speed for", subfolder, "at", speed, "speed:", avg_speed, "cm/s", "Standard Deviation:", std_dev_speed, "cm/s")
+
+        for speed, speeds_list in subfolder_average_straightness.items():
+            if speeds_list:
+                avg_straightness = np.mean(speeds_list)
+                std_dev_straightness = np.std(speeds_list)
+                print("Average Straightness for", subfolder, "at", speed, "speed:", avg_straightness, ", Standard Deviation:", std_dev_straightness)
+
 
 # End of subfolder iteration
