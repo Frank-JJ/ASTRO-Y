@@ -184,49 +184,63 @@ print("\n")
 # print(plast_data[0])
 # print(data_frame["plast"]["left"]["crawl"]["05"]["3"])
 
-f, axs = plt.subplots(figsize=(10, 6))
 surface = "plast"
 direction = "left"
 gait = "crawl"
 # key = "3"
+# colors = [["r","y","b"],["m","g","k"]]
 speed_colors = ["r","y","b"]
 test_lines = ['-','--',':']
 test_markers = [' ',' ',' ']
-test_width = [3,3,3]
-for speed_index, key_speed in enumerate(data_frame[surface][direction][gait].keys()):
-    # speed_distances = {}
-    for test_index, (key_test, value) in enumerate(data_frame[surface][direction][gait][key_speed].items()):
-        time = value["time"]
-        x_position = value["x_position"]
-        y_position = value["y_position"]
-        distance = np.sqrt(x_position**2 + y_position**2)
-        # print("\ntime:", time)
-        # print("\ndistance:", distance)
-        # for index, second in enumerate(time):
-        #     if second not in speed_distances:
-        #         speed_distances[second] = 0
-        #         print("not same in: ", key_speed, key_test, second)
-        #     speed_distances[second] = ((speed_distances[second]*test_index) + distance[index]) / (test_index + 1)
-        # plt.plot(time, x_position, label=f"{key} x", linewidth=4)
-        # plt.plot(time, y_position, label=f"{key} y", linewidth=4)
-        plt.plot(time, distance, label=f"cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=speed_colors[speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
+test_width = [2,2,2]
+matplotlib.rcParams.update({'font.size': 15})
+for surface_index, key_surface  in enumerate(data_frame.keys()):
+    surface = key_surface
+    for direction_index, key_direction  in enumerate(data_frame[surface].keys()):
+        direction = key_direction
+        for gait_index, key_gait  in enumerate(data_frame[surface][direction].keys()):
+            f, axs = plt.subplots(figsize=(3, 3))
+            gait = key_gait
+            for speed_index, key_speed in enumerate(data_frame[surface][direction][gait].keys()):
+                # speed_distances = {}
+                for test_index, (key_test, value) in enumerate(data_frame[surface][direction][gait][key_speed].items()):
+                    time = value["time"]
+                    x_position = value["x_position"]
+                    y_position = value["y_position"]
+                    distance = np.sqrt(x_position**2 + y_position**2)
+                    # print("\ntime:", time)
+                    # print("\ndistance:", distance)
+                    # for index, second in enumerate(time):
+                    #     if second not in speed_distances:
+                    #         speed_distances[second] = 0
+                    #         print("not same in: ", key_speed, key_test, second)
+                    #     speed_distances[second] = ((speed_distances[second]*test_index) + distance[index]) / (test_index + 1)
+                    # plt.plot(time, x_position, label=f"{key} x", linewidth=4)
+                    # plt.plot(time, y_position, label=f"{key} y", linewidth=4)
+                    plt.plot(time, distance, label=f"cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=speed_colors[speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
+                    # plt.plot(time, distance, label=f"{gait} cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=colors[gait_index][speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
 
-    # test_index = 0
-    # times = speed_distances.keys()
-    # # print(times)
-    # distances = speed_distances.values()
-    # plt.plot(times, distances, label=f"cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=speed_colors[speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
+                # test_index = 0
+                # times = speed_distances.keys()
+                # # print(times)
+                # distances = speed_distances.values()
+                # plt.plot(times, distances, label=f"cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=speed_colors[speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
 
 
-plt.xlabel('Time')
-plt.ylabel('Position')
-plt.title(f'Position vs Time (Relative to Initial Position) {surface}+{direction}+{gait}')
-h, l = axs.get_legend_handles_labels()
-# plt.legend()
-plt.legend(handles=zip(h[::3], h[1::3]), labels=l[::3], handler_map = {tuple: matplotlib.legend_handler.HandlerTuple(None)})
-plt.grid(True)
-plt.show()
+            plt.xlabel('Time')
+            plt.ylabel('Position')
+            plt.xlim(0,60)
+            plt.ylim(0,60)
+            # plt.title(f'Position vs Time (Relative to Initial Position) {surface}+{direction}+{gait}')
+            h, l = axs.get_legend_handles_labels()
+            # plt.legend()
+            # plt.legend(handles=zip(h[::3], h[1::3]), labels=l[::3], handler_map = {tuple: matplotlib.legend_handler.HandlerTuple(None)}, loc='lower center', bbox_to_anchor=(0.5, 1.05))
+            plt.grid(True)
+            plt.tight_layout()
+            # plt.show()
+            f.savefig(f'Gait_{surface}+{direction}+{gait}.pdf')
+            plt.close(f)
 
-# data_frame = data_frame.transpose()
+            # data_frame = data_frame.transpose()
 
-# print(data_frame[data_frame.columns[0]])
+            # print(data_frame[data_frame.columns[0]])
