@@ -42,7 +42,8 @@ def calculate_straightness(x_position, y_position):
     total_displacement_y = abs(y_position[-1] - y_position[0])
     if total_displacement_y == 0:
         return float('inf')
-    straightness = total_displacement_x / total_displacement_y
+    straightness = np.arctan2(total_displacement_y,total_displacement_x)
+    # straightness = total_displacement_x / total_displacement_y
     return straightness
 
 def plot_data_with_slope(time, x_position, y_position):
@@ -196,7 +197,7 @@ gait = "crawl"
 speed_colors = ["r","g","b"]
 test_lines = ['-','--',':']
 test_markers = [' ',' ',' ']
-test_width = [2,2,2]
+test_width = [1,1,1]
 matplotlib.rcParams.update({'font.size': 15})
 for surface_index, key_surface  in enumerate(data_frame.keys()):
     surface = key_surface
@@ -204,6 +205,7 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
         direction = key_direction
         for gait_index, key_gait  in enumerate(data_frame[surface][direction].keys()):
             f, axs = plt.subplots(figsize=(3, 3))
+            f, (a0, a1) = plt.subplots(1, 2, gridspec_kw={'width_ratios': [3, 1]})
             gait = key_gait
             for speed_index, key_speed in enumerate(data_frame[surface][direction][gait].keys()):
                 # speed_distances = {}
@@ -212,6 +214,11 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
                     x_position = value["x_position"]
                     y_position = value["y_position"]
                     distance = np.sqrt(x_position**2 + y_position**2)
+                    angle = value["straightness"]
+                    # vector = [1/np.tan(angle),np.tan(angle)]
+                    vector = [x_position[-1]-x_position[0],y_position[-1]-y_position[0]]
+                    vector = vector/np.sqrt(vector[0]**2+vector[1]**2)
+                    vector *= 10
                     # print("\ntime:", time)
                     # print("\ndistance:", distance)
                     # for index, second in enumerate(time):
@@ -221,7 +228,8 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
                     #     speed_distances[second] = ((speed_distances[second]*test_index) + distance[index]) / (test_index + 1)
                     # plt.plot(time, x_position, label=f"{key} x", linewidth=4)
                     # plt.plot(time, y_position, label=f"{key} y", linewidth=4)
-                    plt.plot(time, distance, label=f"cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=speed_colors[speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
+                    a0.plot(time, distance, label=f"cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=speed_colors[speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
+                    a1.arrow(0,0,vector[0],vector[1], label=f"cycle-time[s]:{int(key_speed)/10}", color=speed_colors[speed_index], width=0.8)
                     # plt.plot(time, distance, label=f"{gait} cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=colors[gait_index][speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
                     if top_speed < value["average_speed"]:
                         top_speed = value["average_speed"]
@@ -234,18 +242,18 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
                 # plt.plot(times, distances, label=f"cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=speed_colors[speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
 
 
-            plt.xlabel('Time')
-            plt.ylabel('Position')
-            plt.xlim(0,60)
-            plt.ylim(0,60)
+            a0.set_xlabel('Time (s)')
+            a0.set_ylabel('Displacement (cm)')
+            a0.set_xlim(0,60)
+            a0.set_ylim(0,60)
             # plt.title(f'Position vs Time (Relative to Initial Position) {surface}+{direction}+{gait}')
-            h, l = axs.get_legend_handles_labels()
+            h, l = a0.get_legend_handles_labels()
             # plt.legend()
             # plt.legend(handles=zip(h[::3], h[1::3]), labels=l[::3], handler_map = {tuple: matplotlib.legend_handler.HandlerTuple(None)}, loc='lower center', bbox_to_anchor=(0.5, 1.05))
-            plt.grid(True)
-            plt.tight_layout()
+            a0.grid(True)
+            f.tight_layout()
             tick_spacing = 20
-            axs.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+            a0.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
             # plt.show()
             f.savefig(f'Gait_{surface}+{direction}+{gait}.pdf')
             plt.close(f)
