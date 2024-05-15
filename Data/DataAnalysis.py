@@ -87,10 +87,10 @@ for subfolder in os.listdir(main_folder):
                 file_path = os.path.join(subfolder_path, file_name)
 
                 # Extract speed information from file name
-                speed_match = re.search(r'plast__left_(\w+)_(\d+)_\d+', file_name)
+                #speed_match = re.search(r'plast__left_(\w+)_(\d+)_\d+', file_name)
                 #speed_match = re.search(r'plast__right_(\w+)_(\d+)_\d+', file_name)
                 #speed_match = re.search(r'wood__left_(\w+)_(\d+)_\d+', file_name)
-                #speed_match = re.search(r'wood__right_(\w+)_(\d+)_\d+', file_name)
+                speed_match = re.search(r'wood__right_(\w+)_(\d+)_\d+', file_name)
 
                 if speed_match:
                     speed_type = speed_match.group(1)
@@ -118,7 +118,7 @@ for subfolder in os.listdir(main_folder):
 
                     # Step 5: Plot the data with slope lines
                     #plot_data_with_slope(time, x_position, y_position)
-                    #print("Average Speed for", file_name, ":", average_speed, "cm/s")
+                    print("Average Speed for", file_name, ":", average_speed, "cm/s")
 
         # Calculate and print the average speed for each speed in the subfolder
         for speed, speeds_list in subfolder_average_speeds.items():
