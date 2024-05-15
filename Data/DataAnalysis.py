@@ -1,3 +1,5 @@
+import os
+import re
 import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.linear_model import LinearRegression
@@ -12,7 +14,7 @@ def parse_data(data):
     x_position = []
     y_position = []
     for line in data[2:]:
-        parts = line.strip().split(";")
+        parts = line.strip().split("\t")  # Changed delimiter to tab
         time.append(float(parts[0]))
         x_position.append(float(parts[1]))
         y_position.append(float(parts[2]))
@@ -30,6 +32,14 @@ def calculate_average_speed(time, x_position, y_position):
     total_time_seconds = time[-1] - time[0]
     average_speed_cm_per_second = total_distance_cm / total_time_seconds
     return average_speed_cm_per_second
+
+def calculate_straightness(x_position, y_position):
+    total_displacement_x = abs(x_position[-1] - x_position[0])
+    total_displacement_y = abs(y_position[-1] - y_position[0])
+    if total_displacement_y == 0:
+        return float('inf')
+    straightness = total_displacement_x / total_displacement_y
+    return straightness
 
 def plot_data_with_slope(time, x_position, y_position):
     plt.figure(figsize=(10, 6))
@@ -55,31 +65,48 @@ def plot_data_with_slope(time, x_position, y_position):
     plt.grid(True)
     plt.show()
 
-# Paths to data files
-file_paths = ["Tail_wag/Wail_wag1.txt", "Tail_wag/Wail_wag2.txt", "Tail_wag/Wail_wag3.txt"]
+# Path to the main folder
+main_folder = "Data"
 
-total_average_speed = 0.0
+# Iterate through subfolders
+for subfolder in os.listdir(main_folder):
+    subfolder_path = os.path.join(main_folder, subfolder)
+    if os.path.isdir(subfolder_path):
+        # Initialize dictionary to store average speeds for each speed in the subfolder
+        subfolder_average_speeds = {"05": [], "10": [], "20": []}
 
-for file_path in file_paths:
-    # Step 1: Read the data
-    data = read_data(file_path)
+        # Iterate through files in the subfolder
+        for file_name in os.listdir(subfolder_path):
+            if file_name.endswith(".txt"):
+                file_path = os.path.join(subfolder_path, file_name)
 
-    # Step 2: Parse the data
-    time, x_position, y_position = parse_data(data)
+                # Extract speed information from file name
+                speed_match = re.search(r'plast__left_(\w+)_(\d+)_\d+', file_name)
+                if speed_match:
+                    speed_type = speed_match.group(1)
+                    speed_value = speed_match.group(2)
 
-    # Step 3: Subtract the initial position
-    x_position, y_position = subtract_initial_position(x_position, y_position)
+                    # Step 1: Read the data
+                    data = read_data(file_path)
 
-    # Step 4: Calculate the average speed
-    average_speed = calculate_average_speed(time, x_position, y_position)
+                    # Step 2: Parse the data
+                    time, x_position, y_position = parse_data(data)
 
-    # Add the average speed to the total
-    total_average_speed += average_speed
+                    # Step 3: Subtract the initial position
+                    x_position, y_position = subtract_initial_position(x_position, y_position)
 
-    # Step 5: Plot the data with slope lines
-    plot_data_with_slope(time, x_position, y_position)
-    print("Average Speed for", file_path, ":", average_speed, "cm/s")
+                    # Step 4: Calculate the average speed
+                    average_speed = calculate_average_speed(time, x_position, y_position)
+                    subfolder_average_speeds[speed_value].append(average_speed)
 
-# Calculate the overall average speed
-overall_average_speed = total_average_speed / len(file_paths)
-print("Total Average Speed of the 3 files:", overall_average_speed, "cm/s")
+                    # Step 5: Plot the data with slope lines
+                    #plot_data_with_slope(time, x_position, y_position)
+                    #print("Average Speed for", file_name, ":", average_speed, "cm/s")
+
+        # Calculate and print the average speed for each speed in the subfolder
+        for speed, speeds_list in subfolder_average_speeds.items():
+            if speeds_list:
+                avg_speed = np.mean(speeds_list)
+                print("Average Speed for", subfolder, "at", speed, "speed:", avg_speed, "cm/s")
+
+# End of subfolder iteration
