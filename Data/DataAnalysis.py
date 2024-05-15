@@ -2,6 +2,7 @@ import os
 import re
 import matplotlib.pyplot as plt
 import matplotlib
+import matplotlib.ticker as ticker
 import numpy as np
 from sklearn.linear_model import LinearRegression
 import pandas as pd
@@ -184,12 +185,15 @@ print("\n")
 # print(plast_data[0])
 # print(data_frame["plast"]["left"]["crawl"]["05"]["3"])
 
+top_speed = 0
+top_setting = ""
+
 surface = "plast"
 direction = "left"
 gait = "crawl"
 # key = "3"
 # colors = [["r","y","b"],["m","g","k"]]
-speed_colors = ["r","y","b"]
+speed_colors = ["r","g","b"]
 test_lines = ['-','--',':']
 test_markers = [' ',' ',' ']
 test_width = [2,2,2]
@@ -219,6 +223,9 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
                     # plt.plot(time, y_position, label=f"{key} y", linewidth=4)
                     plt.plot(time, distance, label=f"cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=speed_colors[speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
                     # plt.plot(time, distance, label=f"{gait} cycle-time[s]:{int(key_speed)/10}", linewidth=test_width[test_index], markersize=test_width[test_index], color=colors[gait_index][speed_index], linestyle=test_lines[test_index], marker=test_markers[test_index])
+                    if top_speed < value["average_speed"]:
+                        top_speed = value["average_speed"]
+                        top_setting = f"{surface}_{direction}_{gait}_{key_speed}_{key_test}"
 
                 # test_index = 0
                 # times = speed_distances.keys()
@@ -237,6 +244,8 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
             # plt.legend(handles=zip(h[::3], h[1::3]), labels=l[::3], handler_map = {tuple: matplotlib.legend_handler.HandlerTuple(None)}, loc='lower center', bbox_to_anchor=(0.5, 1.05))
             plt.grid(True)
             plt.tight_layout()
+            tick_spacing = 20
+            axs.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
             # plt.show()
             f.savefig(f'Gait_{surface}+{direction}+{gait}.pdf')
             plt.close(f)
@@ -244,3 +253,5 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
             # data_frame = data_frame.transpose()
 
             # print(data_frame[data_frame.columns[0]])
+
+print("Top speed:", top_speed, "at:", top_setting)
