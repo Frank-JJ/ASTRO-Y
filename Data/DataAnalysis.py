@@ -198,7 +198,7 @@ speed_colors = ["r","g","b"]
 test_lines = ['-','--',':']
 test_markers = [' ',' ',' ']
 test_width = [1,1,1]
-matplotlib.rcParams.update({'font.size': 15})
+matplotlib.rcParams.update({'font.size': 20})
 for surface_index, key_surface  in enumerate(data_frame.keys()):
     surface = key_surface
     for direction_index, key_direction  in enumerate(data_frame[surface].keys()):
@@ -217,8 +217,10 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
                     angle = value["straightness"]
                     # vector = [1/np.tan(angle),np.tan(angle)]
                     vector = [x_position[-1]-x_position[0],y_position[-1]-y_position[0]]
-                    vector = vector/np.sqrt(vector[0]**2+vector[1]**2)
-                    vector *= 10
+                    extra_angle = np.pi/2
+                    vector = np.array([[np.cos(extra_angle),-np.sin(extra_angle)],[np.sin(extra_angle),np.cos(extra_angle)]])@np.array(vector)
+                    # vector = vector/np.sqrt(vector[0]**2+vector[1]**2)
+                    # vector *= 10
                     # print("\ntime:", time)
                     # print("\ndistance:", distance)
                     # for index, second in enumerate(time):
@@ -246,14 +248,24 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
             a0.set_ylabel('Displacement (cm)')
             a0.set_xlim(0,60)
             a0.set_ylim(0,60)
+            a1.axis('scaled')
+            a1.set_xlim(-20,20)
+            a1.set_ylim(-82,82)
+            # a1.axes.get_xaxis().set_visible(False)
+            # a1.axes.get_yaxis().set_visible(False)
+            plt.setp(a1.axes.get_yticklabels(), visible=False)
+            plt.setp(a1.axes.get_xticklabels(), visible=False)
+            a1.set_xlabel('Direction')
             # plt.title(f'Position vs Time (Relative to Initial Position) {surface}+{direction}+{gait}')
             h, l = a0.get_legend_handles_labels()
             # plt.legend()
             # plt.legend(handles=zip(h[::3], h[1::3]), labels=l[::3], handler_map = {tuple: matplotlib.legend_handler.HandlerTuple(None)}, loc='lower center', bbox_to_anchor=(0.5, 1.05))
             a0.grid(True)
+            a1.grid(True)
             f.tight_layout()
             tick_spacing = 20
             a0.xaxis.set_major_locator(ticker.MultipleLocator(tick_spacing))
+            a1.yaxis.set_major_locator(ticker.MultipleLocator(90))
             # plt.show()
             f.savefig(f'Gait_{surface}+{direction}+{gait}.pdf')
             plt.close(f)
