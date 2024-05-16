@@ -209,12 +209,14 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
             gait = key_gait
             for speed_index, key_speed in enumerate(data_frame[surface][direction][gait].keys()):
                 # speed_distances = {}
+                speed_average = []
                 for test_index, (key_test, value) in enumerate(data_frame[surface][direction][gait][key_speed].items()):
                     time = value["time"]
                     x_position = value["x_position"]
                     y_position = value["y_position"]
                     distance = np.sqrt(x_position**2 + y_position**2)
                     angle = value["straightness"]
+                    speed_average.append(value["average_speed"])
                     # vector = [1/np.tan(angle),np.tan(angle)]
                     vector = [x_position[-1]-x_position[0],y_position[-1]-y_position[0]]
                     extra_angle = np.pi/2
@@ -236,7 +238,7 @@ for surface_index, key_surface  in enumerate(data_frame.keys()):
                     if top_speed < value["average_speed"]:
                         top_speed = value["average_speed"]
                         top_setting = f"{surface}_{direction}_{gait}_{key_speed}_{key_test}"
-
+                print("Average for",key_speed,np.std(speed_average))
                 # test_index = 0
                 # times = speed_distances.keys()
                 # # print(times)
